@@ -4,39 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hello world!</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="app">
-        <main>
-            <section id="chat">
-                <div class="bubble" v-for="(item, index) in allMessages" v-bind:class="styleMessage(item)" v-bind:key="index">
-                    <h4><span v-if="item.private">From: </span>{{ item.user }}</h4>
-                    <p>{{ item.msg }}</p>
-                </div>
-            </section>
-            <aside id="online">
-                <div class="user" v-for="(user, index) in onlineUsers" v-bind:key="index">
-                    <h5>{{ user.name }}</h5>
-                    <p>{{ user.status }}</p>
-                </div>
-            </aside>
-        </main>
-        <section id="type-area">
-            <p v-if="areTyping">Typing... <span v-for="(typer, index) in currentlyTyping" :key="index">{{ typer }}, </span></p>
-            <textarea id="input" cols="1" rows="1" autofocus type="text" v-model="inputMessage" @keydown="iAmTyping" @keypress.enter="sendMessage"></textarea>
-            <button @click="sendMessage">Send</button>
-        </section>
+        <v-app>
+            <v-container fluid> 
+                <v-row>
+                    <v-col cols="10"  id="chat">
+                        <div class="bubble" v-for="(item, index) in allMessages" v-bind:class="styleMessage(item)" v-bind:key="index">
+                            <h4><span v-if="item.private =='from'">From: </span>
+                            <span v-if="item.private =='to'">To: </span>
+                                <span>{{ item.user }}</span></h4>
+                            <p>{{ item.msg }}</p>
+                        </div>
+                    </v-col>
+                    <v-col cols="2" id="online">
+                        <div class="user" v-for="(user, index) in onlineUsers" v-bind:key="index">
+                            <h5>{{ user.name }}</h5>
+                            <p>{{ user.status }}</p>
+                        </div>
+                    </v-col>
+                </v-row>
+                <v-row>
+                    <v-col cols="12">
+                        <p v-if="areTyping">Typing... <span v-for="(typer, index) in currentlyTyping" :key="index">{{ typer }}, </span></p>
+                    </v-col>
+                <v-row>
+                <v-row id="inputArea">
+                    <v-col cols="9">
+                        <v-text-field id="input" autofocus type="text" v-model="inputMessage" @keydown="iAmTyping" @keypress.enter="sendMessage"></v-text-field>
+                    </v-col>
+                    <v-col cols="3">
+                        <v-btn @click="sendMessage">Send</v-btn>
+                    </v-col>
+                </v-row>
+            </v-container>
+        </v-app>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
         var timer;
         var app = new Vue({
             el: "#app",
+            vuetify: new Vuetify(),
             data() {
                 return {
                     myUsername: "",
@@ -99,10 +117,14 @@
                     if (item.user == this.myUsername) {
                         return 'myMessage'
                     } else {
-                        if (item.private == true) {
+                        if (item.private == 'from') {
                             return 'privateMsg'
                         } else {
-                            return ''
+                            if(item.private == 'to'){
+                                return 'privateSendMsg'
+                            } else {
+                                return ''
+                            }
                         }
                     }
                 },
@@ -151,7 +173,15 @@
                         this.allMessages.push({
                             user: data.messageFrom,
                             msg: data.messageBody,
-                            private: true
+                            private: 'from'
+                        })
+                    })
+
+                    socket.on('sent-private-message',data=>{
+                        this.allMessages.push({
+                            user: data.messageTo,
+                            msg: data.messageBody,
+                            private: 'to'
                         })
                     })
 

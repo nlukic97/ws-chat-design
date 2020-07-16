@@ -64,6 +64,10 @@ io.on('connection', (socket) => {
                     messageFrom: data.privateFrom,
                     messageBody: data.privateWhat
                 });
+                socket.emit('sent-private-message',{
+                    messageTo: data.privateTo,
+                    messageBody: data.privateWhat
+                })
                 console.log('PRIVATE', data.privateFrom, data.privateTo, data.privateWhat);
             }
         }
