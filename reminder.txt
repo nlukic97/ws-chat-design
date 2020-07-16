@@ -1,0 +1,14 @@
+✓ bug fix: long words
+✓ bug fix: name already taken mistake
+- bug fix: forbid sending empty messages
+- bug fix: no spaces allowed in usernames
+- bug fix: idiot-proofing
+- bug fix: see private message when sent
+✓ bug fix: user stays in typing on disconnect
+✓ feature: users typing
+✓ feature: your messages on the right side
+- feature: individual message colors
+✓ feature: private messages
+- feature: lock accounts
+- feature: emojis
+- feature: text formatting (bold, italic, underline, strike-through)

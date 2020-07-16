@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello world!</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <main>
+            <section id="chat">
+                <div class="bubble" v-for="(item, index) in allMessages" v-bind:class="styleMessage(item)" v-bind:key="index">
+                    <h4><span v-if="item.private">From: </span>{{ item.user }}</h4>
+                    <p>{{ item.msg }}</p>
+                </div>
+            </section>
+            <aside id="online">
+                <div class="user" v-for="(user, index) in onlineUsers" v-bind:key="index">
+                    <h5>{{ user.name }}</h5>
+                    <p>{{ user.status }}</p>
+                </div>
+            </aside>
+        </main>
+        <section id="type-area">
+            <p v-if="areTyping">Typing... <span v-for="(typer, index) in currentlyTyping" :key="index">{{ typer }}, </span></p>
+            <textarea id="input" cols="1" rows="1" autofocus type="text" v-model="inputMessage" @keydown="iAmTyping" @keypress.enter="sendMessage"></textarea>
+            <button @click="sendMessage">Send</button>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+        var timer;
+        var app = new Vue({
+            el: "#app",
+            data() {
+                return {
+                    myUsername: "",
+                    status: "",
+                    onlineUsers: [],
+                    inputMessage: "",
+                    allMessages: [],
+                    currentlyTyping: [],
+                    areTyping: false,
+                    typingTimer: 0
+                }
+            },
+            methods: {
+                validateUsername: function() {
+                    this.myUsername = prompt('Choose your username');
+                    if (this.myUsername == null || this.myUsername == "" || this.myUsername.indexOf(' ') > -1) {
+                        this.validateUsername();
+                    }
+                },
+                iAmTyping: function() {
+                    socket.emit('user-typing', {
+                        userTyping: this.myUsername
+                    });
+                    this.typingTimer = 0;
+                    clearInterval(timer);
+                    timer = setInterval(() => {
+                        if (this.typingTimer >= 3) {
+                            socket.emit('user-not-typing', {
+                                userNotTyping: this.myUsername
+                            })
+                            this.typingTimer = 0;
+                            clearInterval(timer);
+                        } else {
+                            this.typingTimer++;
+                        }
+                    }, 300)
+                },
+                sendMessage: function() {
+                    if (this.inputMessage.indexOf('/p') == 0 || this.inputMessage.indexOf('/private') == 0) {
+                        var privateType = this.inputMessage.split(' ')[0];
+                        var privateReceiver = this.inputMessage.split(' ')[1];
+                        var privateMessage = this.inputMessage.split(privateType + ' ' + privateReceiver + ' ')[1];
+                        if (privateReceiver && privateMessage) {
+                            socket.emit('private-chat-message', {
+                                privateFrom: this.myUsername,
+                                privateTo: privateReceiver,
+                                privateWhat: privateMessage
+                            });
+                        }
+                    } else {
+                        socket.emit('chat-message', {
+                            user: this.myUsername,
+                            msg: this.inputMessage
+                        })
+                    }
+                    
+                    this.inputMessage = "";
+                },
+                styleMessage: function(item) {
+                    if (item.user == this.myUsername) {
+                        return 'myMessage'
+                    } else {
+                        if (item.private == true) {
+                            return 'privateMsg'
+                        } else {
+                            return ''
+                        }
+                    }
+                },
+                scrollToBottom: function() {
+                    var chat = document.getElementById('chat');
+                    if (chat.scrollTop > chat.scrollHeight - chat.clientHeight - 400) {
+                        chat.scrollTop = chat.scrollHeight;
+                    }
+                }
+            },
+            mounted() {
+                this.validateUsername();
+                this.status = prompt('What\'s on your mind?');
+                document.getElementById('input').focus();
+
+                socket.on('connect', () => {
+                    
+                    socket.emit('new-user', {
+                        name: this.myUsername,
+                        status: this.status
+                    })
+
+                    socket.on('username-taken', data => {
+                        alert('Username ' + data + ' taken');
+                        this.validateUsername();
+                        socket.emit('new-user', {
+                            name: this.myUsername,
+                            status: this.status
+                        })
+                    })
+
+                    socket.on('new-user-online', data => {
+                        this.onlineUsers = data;
+                    })
+
+                    socket.on('users-typing', data => {
+                        this.currentlyTyping = data;
+                        if (this.currentlyTyping[0]) {
+                            this.areTyping = true;
+                        } else {
+                            this.areTyping = false;
+                        }
+                    })
+
+                    socket.on('private-message-received', data => {
+                        this.allMessages.push({
+                            user: data.messageFrom,
+                            msg: data.messageBody,
+                            private: true
+                        })
+                    })
+
+                    socket.on('send-message-all', data => {
+                        this.allMessages.push({
+                            user: data.user,
+                            msg: data.msg
+                        });
+                    })
+                })
+            },
+            updated() {
+                this.scrollToBottom()
+            }
+        })
+    </script>
+</body>
+</html>
