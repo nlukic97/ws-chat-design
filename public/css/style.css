@@ -46,10 +46,51 @@ html, body {
     text-align: right;
 }
 
+#inputArea {
+    margin: 0;
+    position: absolute;
+    bottom:0;
+    left:0;
+    width: 100%;
+}
+
 #inputArea .col{
-    padding-bottom: 0;
+    /* padding: 0; */
+}
+
+#inputArea .col .v-input {
+    padding-top: 0;
 }
 
 #input-area .v-input__slot {
     margin-bottom: 0;
+}
+
+#inputArea input {
+    border:1px solid #333;
+}
+
+#inputArea input:focus {
+    border:none;
+}
+
+#inputArea .v-input .v-input__control .v-text-field__details {
+    display: none;
+}
+
+#isTyping {
+    position: absolute;
+    bottom: 40px;
+}
+
+#isTyping .col {
+    padding:0 12px;
+}
+
+#isTyping .col p {
+    margin-bottom: 0;
+}
+
+.absolute {
+    
 }
