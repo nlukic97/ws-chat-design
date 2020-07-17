@@ -30,15 +30,15 @@
                     </v-col>
                 </v-row>
                 <v-row id="isTyping">
-                    <v-col cols="12">
+                    <v-col md="12">
                         <p v-if="areTyping">Typing... <span v-for="(typer, index) in currentlyTyping" :key="index">{{ typer }}, </span></p>
                     </v-col>
                 </v-row>
                     <v-row id="inputArea">
-                        <v-col cols="9">
+                        <v-col md="9" sm="8">
                             <v-text-field id="input" autofocus type="text" v-model="inputMessage" @keydown="iAmTyping" @keypress.enter="sendMessage"></v-text-field>
                         </v-col>
-                        <v-col cols="3">
+                        <v-col md="3" sm="4">
                             <v-btn @click="sendMessage">Send</v-btn>
                         </v-col>
                     </v-row>
