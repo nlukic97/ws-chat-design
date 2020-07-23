@@ -4,36 +4,67 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var port = 3000;
 
+//konekcija ka data bazi
+var mysql = require('mysql');
+var connection = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : '',
+    database : 'ws_chat'
+  });
+
+  connection.connect();
+
+  connection.query('SELECT username FROM users ',(error, results)=>{
+    console.log(results)
+  })
+  
+
 http.listen(port, function() {
     console.log('Started WebSocket on port ' + port);
 })
 
 app.use(express.static('./public'));
 
-var allUsers = [];
+var allUsers = []; //online korisnici
 var typing = [];
+var DbUsers; //korisnici iz databaze
 
 io.on('connection', (socket) => {
     var clientId = socket.id;
 
     socket.on('new-user', (data) => {
         var userExists = false;
-        for (let i = 0; i < allUsers.length; i++) {
-            if (allUsers[i].name == data.name) {
+        connection.query('SELECT * FROM users AS users', (error, results)=>{
+            DbUsers = results;
+            console.log(DbUsers)
+            for (let i = 0; i < DbUsers.length; i++) {
+            if (DbUsers[i].username == data.username) {
                 userExists = true;
-                socket.emit('username-taken', data.name)
+                socket.emit('username-exists', data.username)
             }
         }
         if (!userExists) {
             console.log('A new user joined - ' + data.name);
             allUsers.push({
                 name: data.name,
-                status: data.status,
                 id: clientId
             });
             io.emit('new-user-online', allUsers);
         }
+        })
+        socket.on('entered-password',(password)=>{ //ovo sad treba unutra da bude da se vidi data
+            for (let i = 0; i < DbUsers.length; i++) {
+                if(DbUsers[i].userName == data.username && DbUsers[i].password == password){
+                    allUsers.push('')
+                }
+                
+            }
+        
+        })
     })
+
+    
 
     socket.on('user-typing', data => {
         var alreadyTyping = false;

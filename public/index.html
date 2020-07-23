@@ -14,7 +14,7 @@
         <v-app>
             <v-container fluid> 
                 <v-row>
-                    <v-col cols="10"  id="chat">
+                    <v-col cols="10"  id="chat" class="pa-0 ma-0">
                         <div class="bubble" v-for="(item, index) in allMessages" v-bind:class="styleMessage(item)" v-bind:key="index">
                             <h4><span v-if="item.private =='from'">From: </span>
                             <span v-if="item.private =='to'">To: </span>
@@ -137,23 +137,28 @@
             },
             mounted() {
                 this.validateUsername();
-                this.status = prompt('What\'s on your mind?');
                 document.getElementById('input').focus();
 
                 socket.on('connect', () => {
                     
                     socket.emit('new-user', {
-                        name: this.myUsername,
-                        status: this.status
+                        username: this.myUsername
                     })
 
-                    socket.on('username-taken', data => {
-                        alert('Username ' + data + ' taken');
-                        this.validateUsername();
-                        socket.emit('new-user', {
-                            name: this.myUsername,
+                    socket.on('username-exists', data => {
+                        var login = confirm('Username ' + data + ' already exists. Press "OK" to log in, or "cancel" to log in as another user.')
+                        if(login === true){
+                            socket.emit('entered-password',{
+                                password: prompt('Enter password form ' + data)
+                            })
+                        } else {
+                            this.validateUsername();
+                            socket.emit('new-user', {
+                            username: this.myUsername,
                             status: this.status
                         })
+                        }
+                        
                     })
 
                     socket.on('new-user-online', data => {
